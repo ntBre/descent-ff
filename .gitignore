@@ -112,3 +112,4 @@ ENV/
 .DS_Store
 
 energy-force/outputs
+slurm-*.out
