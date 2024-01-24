@@ -20,13 +20,17 @@ for f in *.tar.gz; do tar -zxvf "$f"; done
 rm -r *.tar.gz
 ```
 
+Make sure you have at least 6.2 GB of available disk space for the
+initial download, which expands to 7.5 GB after step 1 below.
+
 It needs to be converted into a Hugging Face dataset (i.e. `pyarrow` format) to be used in descent:
 
 ```shell
 python 001-convert-espaloma-data.py
 ```
 
-This should create a `outputs/data-raw` directory containing each converted dataset.
+This requires more than 8 GB of RAM to run and should create a
+`outputs/data-raw` directory containing each converted dataset.
 
 Each molecule should be pre-parameterized with the SMIRNOFF force field being trained. This is because `smee` force
 field objects are created from Interchange objects rather than SMIRNOFF force field files.
