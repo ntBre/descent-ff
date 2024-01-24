@@ -2,6 +2,7 @@ name: descent-ff
 
 channels:
   - conda-forge
+  - openeye
 
 dependencies:
 
@@ -17,7 +18,7 @@ dependencies:
   - openff-toolkit
   - openff-interchange
   - rdkit
-  - ambertools
+  - openeye-toolkits=2022.1.1
 
   # Training
   - tensorboard
