@@ -4,24 +4,29 @@ import datetime
 import math
 import os
 import pathlib
+import warnings
+from sys import argv
 
-import datasets
-import datasets.distributed
-import datasets.table
-import pydantic
-import smee
-import tensorboardX
-import torch
-import torch.distributed
+with warnings.catch_warnings():
+    warnings.simplefilter(action='ignore')
+    import datasets
+    import datasets.distributed
+    import datasets.table
+    import pydantic
+    import smee
+    import tensorboardX
+    import torch
+    import torch.distributed
+    import click
 
-import descent.optim
-import descent.targets.energy
-import descent.utils.loss
-import descent.utils.reporting
+    import descent.optim
+    import descent.targets.energy
+    import descent.utils.loss
+    import descent.utils.reporting
 
 MISSING_SMILES = set()
 
-WORLD_SIZE = torch.multiprocessing.cpu_count() - 2
+WORLD_SIZE = 1
 
 
 @contextlib.contextmanager
@@ -149,13 +154,21 @@ def write_metrics(
     writer.add_scalar("rmse_forces", math.sqrt(loss_forces.detach().item()), i)
     writer.flush()
 
-
 def main(rank: int):
+    global WORLD_SIZE
+
+    if len(argv) > 1:
+        WORLD_SIZE = int(argv[1])
+
+    print(f"running with WORLD_SIZE = {WORLD_SIZE}")
+    
     torch.set_num_threads(1)
     torch.distributed.init_process_group("gloo", rank=rank, world_size=WORLD_SIZE)
 
     sources = ["gen2-opt", "gen2-torsion", "spice-des-monomers", "spice-pubchem"]
     # sources = ["gen2-torsion"]
+
+    print("loading force field")
 
     force_field, topologies = torch.load("outputs/openff-2.1.0.pt")
 
@@ -179,6 +192,8 @@ def main(rank: int):
         },
     )
 
+    print("concatenating data sets")
+
     dataset = datasets.concatenate_datasets(
         [
             datasets.Dataset.load_from_disk(f"outputs/data-clustered/{source}")
@@ -186,6 +201,8 @@ def main(rank: int):
         ]
     )
     n_entries = len(dataset)
+
+    print("extracting smiles")
 
     unique_smiles = descent.targets.energy.extract_smiles(dataset)
     topologies = {k: v for k, v in topologies.items() if k in unique_smiles}
@@ -265,6 +282,6 @@ def main(rank: int):
 
 if __name__ == "__main__":
     os.environ["MASTER_ADDR"] = "localhost"
-    os.environ["MASTER_PORT"] = "29500"
+    os.environ["MASTER_PORT"] = "29501"
 
     torch.multiprocessing.spawn(main, nprocs=WORLD_SIZE, join=True)
