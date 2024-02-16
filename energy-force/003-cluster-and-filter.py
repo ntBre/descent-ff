@@ -7,6 +7,7 @@ import functools
 import multiprocessing
 import pathlib
 
+import click
 import datasets
 import numpy
 import openff.toolkit
@@ -82,8 +83,15 @@ def cluster_confs(
     return entry
 
 
-def main():
-    should_cluster = True  # whether to cluster "gen2-opt" conformers
+@click.command()
+@click.option("--cluster", "-c", is_flag=True)
+@click.option("--nworkers", "-n", default=20)
+def main(cluster, nworkers):
+    should_cluster = cluster  # whether to cluster "gen2-opt" conformers
+    global N_WORKERS
+    N_WORKERS = nworkers
+
+    print(f"running with {N_WORKERS} workers, clustering = {should_cluster}")
 
     output_suffix = "clustered" if should_cluster else "filtered"
     output_dir = pathlib.Path(f"outputs/data-{output_suffix}")
