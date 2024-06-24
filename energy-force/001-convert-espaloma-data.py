@@ -1,16 +1,17 @@
-"""Convert the Espaloma 0.3.0 datasets into a format compatible with the descent"""
+"""Convert the Espaloma 0.3.0 datasets into a format compatible with the
+descent"""
+
 import json
 import pathlib
 import typing
 
+import descent.targets.energy
 import dgl
 import openff.toolkit
 import openff.units
 import openmm.unit
 import torch
 from tqdm import tqdm
-
-import descent.targets.energy
 
 HARTEE_TO_KCAL = (
     1.0 * openmm.unit.hartree * openmm.unit.AVOGADRO_CONSTANT_NA
@@ -34,7 +35,9 @@ def process_entry(root_dir: pathlib.Path) -> dict[str, typing.Any]:
 
     energies = graph.ndata["u_qm"]["g"].flatten() * HARTEE_TO_KCAL
 
-    forces = graph.ndata["u_qm_prime"]["n1"] * (HARTEE_TO_KCAL / BOHR_TO_ANGSTROM)
+    forces = graph.ndata["u_qm_prime"]["n1"] * (
+        HARTEE_TO_KCAL / BOHR_TO_ANGSTROM
+    )
     forces = torch.swapaxes(forces, 0, 1)
 
     coords = graph.ndata["xyz"]["n1"] * BOHR_TO_ANGSTROM
@@ -54,11 +57,18 @@ def main():
 
     smiles_per_set = {}
 
-    for source in ["gen2-opt", "gen2-torsion", "spice-des-monomers", "spice-pubchem"]:
+    for source in [
+        "gen2-opt",
+        "gen2-torsion",
+        "spice-des-monomers",
+        "spice-pubchem",
+    ]:
         source_dir = root_dir / source
 
         entries = [
-            f for f in source_dir.glob("*") if f.is_dir() and not f.name.startswith(".")
+            f
+            for f in source_dir.glob("*")
+            if f.is_dir() and not f.name.startswith(".")
         ]
 
         duplicate_dir = root_dir / "duplicated-isomeric-smiles-merge"
@@ -67,7 +77,9 @@ def main():
             duplicate_dir.glob(f"*/{source.replace('-opt', '')}/*")
         )
         entries_duplicate = [
-            f for f in entries_duplicate if f.is_dir() and not f.name.startswith(".")
+            f
+            for f in entries_duplicate
+            if f.is_dir() and not f.name.startswith(".")
         ]
         entries.extend(entries_duplicate)
 
@@ -82,9 +94,8 @@ def main():
         dataset.save_to_disk(output_dir / source)
 
         unique_smiles = dataset.unique("smiles")
-        tqdm.write(
-            f"Found {len(dataset)} ({len(unique_smiles)} unique) SMILES in {source}"
-        )
+        lus = len(unique_smiles)
+        tqdm.write(f"Found {len(dataset)} ({lus} unique) SMILES in {source}")
 
         smiles_per_set[source] = dataset.unique("smiles")
 

@@ -1,4 +1,5 @@
 """Train the force field."""
+
 import contextlib
 import datetime
 import math
@@ -8,21 +9,19 @@ import warnings
 from sys import argv
 
 with warnings.catch_warnings():
-    warnings.simplefilter(action='ignore')
+    warnings.simplefilter(action="ignore")
     import datasets
     import datasets.distributed
     import datasets.table
+    import descent.optim
+    import descent.targets.energy
+    import descent.utils.loss
+    import descent.utils.reporting
     import pydantic
     import smee
     import tensorboardX
     import torch
     import torch.distributed
-    import click
-
-    import descent.optim
-    import descent.targets.energy
-    import descent.utils.loss
-    import descent.utils.reporting
 
 MISSING_SMILES = set()
 
@@ -54,15 +53,18 @@ class ParameterConfig(pydantic.BaseModel):
     )
     constraints: dict[str, tuple[float | None, float | None]] = pydantic.Field(
         {},
-        description="The min and max values to clamp each parameter within, e.g. "
+        description="The min and max values to clamp each parameter within, "
+        "e.g. "
         "'k': (0.0, None), 'angle': (0.0, pi), 'epsilon': (0.0, None), where "
         "none indicates no constraint.",
     )
 
 
 class TrainableParameters:
-    """A wrapper around a SMEE force field that handles zeroing out gradients of
-    fixed parameters and applying parameter constraints."""
+    """A wrapper around a SMEE force field that handles zeroing out gradients
+    of fixed parameters and applying parameter constraints.
+
+    """
 
     def __init__(
         self,
@@ -83,7 +85,9 @@ class TrainableParameters:
                 for i, col in enumerate(potential.parameter_cols)
                 if col not in parameters[potential_type].cols
             ]
-            for potential_type, potential in zip(self.potential_types, potentials)
+            for potential_type, potential in zip(
+                self.potential_types, potentials
+            )
         ]
 
         self._scales = [
@@ -93,7 +97,9 @@ class TrainableParameters:
                     for col in potential.parameter_cols
                 ]
             ).reshape(1, -1)
-            for potential_type, potential in zip(self.potential_types, potentials)
+            for potential_type, potential in zip(
+                self.potential_types, potentials
+            )
         ]
         self._constraints = [
             {
@@ -101,7 +107,9 @@ class TrainableParameters:
                 for i, col in enumerate(potential.parameter_cols)
                 if col in parameters[potential_type].constraints
             }
-            for potential_type, potential in zip(self.potential_types, potentials)
+            for potential_type, potential in zip(
+                self.potential_types, potentials
+            )
         ]
 
         self.parameters = [
@@ -154,6 +162,7 @@ def write_metrics(
     writer.add_scalar("rmse_forces", math.sqrt(loss_forces.detach().item()), i)
     writer.flush()
 
+
 def main(rank: int):
     global WORLD_SIZE
 
@@ -161,11 +170,18 @@ def main(rank: int):
         WORLD_SIZE = int(argv[1])
 
     print(f"running with WORLD_SIZE = {WORLD_SIZE}")
-    
-    torch.set_num_threads(1)
-    torch.distributed.init_process_group("gloo", rank=rank, world_size=WORLD_SIZE)
 
-    sources = ["gen2-opt", "gen2-torsion", "spice-des-monomers", "spice-pubchem"]
+    torch.set_num_threads(1)
+    torch.distributed.init_process_group(
+        "gloo", rank=rank, world_size=WORLD_SIZE
+    )
+
+    sources = [
+        "gen2-opt",
+        "gen2-torsion",
+        "spice-des-monomers",
+        "spice-pubchem",
+    ]
     # sources = ["gen2-torsion"]
 
     print("loading force field")
@@ -179,10 +195,10 @@ def main(rank: int):
     if checkpoint:
         # take initial topologies from the original but try to overwrite
         # forcefield from checkpoint
-        chk = "outputs/runs/20240202-231405/force-field-epoch-900.pt" 
+        chk = "outputs/runs/20240202-231405/force-field-epoch-900.pt"
         force_field = torch.load(chk)
 
-        n_epochs = 100 # finish off last 100
+        n_epochs = 100  # finish off last 100
     lr = 0.01
 
     trainable = TrainableParameters(
@@ -228,7 +244,9 @@ def main(rank: int):
         optimizer = torch.optim.Adam(trainable.parameters, lr=lr, amsgrad=True)
 
         if rank == 0:
-            for v in tensorboardX.writer.hparams({"optimizer": "Adam", "lr": lr}, {}):
+            for v in tensorboardX.writer.hparams(
+                {"optimizer": "Adam", "lr": lr}, {}
+            ):
                 writer.file_writer.add_summary(v)
 
         for i in range(n_epochs):
@@ -275,7 +293,8 @@ def main(rank: int):
 
             if rank == 0 and i % 100 == 0:
                 torch.save(
-                    trainable.force_field, experiment_dir / f"force-field-epoch-{i}.pt"
+                    trainable.force_field,
+                    experiment_dir / f"force-field-epoch-{i}.pt",
                 )
 
     if rank != 0:

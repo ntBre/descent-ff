@@ -1,4 +1,5 @@
 import pathlib
+
 import click
 import numpy
 import openff.toolkit
@@ -29,7 +30,9 @@ def main(force_field_path: pathlib.Path):
             potential_type
         )
 
-        for key, parameter in zip(potential.parameter_keys, potential.parameters):
+        for key, parameter in zip(
+            potential.parameter_keys, potential.parameters
+        ):
             smirks = key.id
 
             handler_parameters = handler.get_parameter({"smirks": smirks})

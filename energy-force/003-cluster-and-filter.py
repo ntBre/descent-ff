@@ -1,14 +1,18 @@
-"""Filter any molecules that are not parameterizable by the OpenFF 2.1.0 force field.
+"""Filter any molecules that are not parameterizable by the OpenFF 2.1.0 force
+field.
 
-Optionally also clusters conformers by their RMSD. Some entries in `gen2-opt` have
-~3000 very similar conformers...
+Optionally also clusters conformers by their RMSD. Some entries in `gen2-opt`
+have ~3000 very similar conformers...
+
 """
+
 import functools
 import multiprocessing
 import pathlib
 
 import click
 import datasets
+import descent.targets.energy
 import numpy
 import openff.toolkit
 import openff.units
@@ -18,12 +22,12 @@ from rdkit import Chem
 from rdkit.Chem import rdMolAlign
 from rdkit.ML.Cluster import Butina
 
-import descent.targets.energy
-
 N_WORKERS = 20
 
 
-def compute_best_rms(pairs: list[tuple[int, int]], mol: Chem.Mol) -> list[float]:
+def compute_best_rms(
+    pairs: list[tuple[int, int]], mol: Chem.Mol
+) -> list[float]:
     # return rdMolAlign.GetBestRMS(Chem.Mol(mol), Chem.Mol(mol), *pair)
     atom_map = [(i, i) for i in range(mol.GetNumAtoms())]
 
@@ -60,7 +64,9 @@ def cluster_confs(
 
         rms_fn = functools.partial(compute_best_rms, mol=mol_rdkit)
 
-        dists = list(tqdm.tqdm(pool.imap(rms_fn, conf_pairs), total=len(conf_pairs)))
+        dists = list(
+            tqdm.tqdm(pool.imap(rms_fn, conf_pairs), total=len(conf_pairs))
+        )
         dists = [d for dist in dists for d in dist]
 
         clusters = Butina.ClusterData(
@@ -72,10 +78,14 @@ def cluster_confs(
 
         entry["energy"] = entry["energy"][cluster_ids]
         entry["coords"] = (
-            entry["coords"].reshape(len(energy_ref), -1, 3)[cluster_ids, :, :].flatten()
+            entry["coords"]
+            .reshape(len(energy_ref), -1, 3)[cluster_ids, :, :]
+            .flatten()
         )
         entry["forces"] = (
-            entry["forces"].reshape(len(energy_ref), -1, 3)[cluster_ids, :, :].flatten()
+            entry["forces"]
+            .reshape(len(energy_ref), -1, 3)[cluster_ids, :, :]
+            .flatten()
         )
     except BaseException as e:
         print(f"failed to cluster {entry}: {e}", flush=True)
@@ -96,14 +106,21 @@ def main(cluster, nworkers):
     output_suffix = "clustered" if should_cluster else "filtered"
     output_dir = pathlib.Path(f"outputs/data-{output_suffix}")
 
-    sources = ["gen2-opt", "gen2-torsion", "spice-des-monomers", "spice-pubchem"]
+    sources = [
+        "gen2-opt",
+        "gen2-torsion",
+        "spice-des-monomers",
+        "spice-pubchem",
+    ]
 
     for source in sources:
         dataset = datasets.Dataset.load_from_disk(f"outputs/data-raw/{source}")
         unique_smiles = descent.targets.energy.extract_smiles(dataset)
 
         force_field, topologies = torch.load("outputs/openff-2.1.0.pt")
-        topologies = {k: v for k, v in topologies.items() if k in unique_smiles}
+        topologies = {
+            k: v for k, v in topologies.items() if k in unique_smiles
+        }
 
         dataset_size = len(dataset)
         dataset = dataset.filter(lambda d: d["smiles"] in topologies)
@@ -112,7 +129,9 @@ def main(cluster, nworkers):
         if should_cluster and source == "gen2-opt":
             with multiprocessing.Pool(N_WORKERS) as pool:
                 cluster_fn = functools.partial(cluster_confs, pool=pool)
-                dataset = dataset.map(cluster_fn, with_indices=False, batched=False)
+                dataset = dataset.map(
+                    cluster_fn, with_indices=False, batched=False
+                )
 
         dataset.save_to_disk(output_dir / source)
 

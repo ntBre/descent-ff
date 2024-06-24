@@ -1,4 +1,5 @@
 """Apply OpenFF 2.1.0 parameters to each unique molecule in the data set."""
+
 import functools
 import json
 import multiprocessing
@@ -71,8 +72,12 @@ def main():
 
     unique_smiles = sorted(unique_smiles)
 
-    force_field, topologies = apply_parameters(unique_smiles, *force_field_paths)
-    torch.save((force_field, topologies), pathlib.Path("outputs", "openff-2.1.0.pt"))
+    force_field, topologies = apply_parameters(
+        unique_smiles, *force_field_paths
+    )
+    torch.save(
+        (force_field, topologies), pathlib.Path("outputs", "openff-2.1.0.pt")
+    )
 
 
 if __name__ == "__main__":
