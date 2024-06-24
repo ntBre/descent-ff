@@ -43,7 +43,7 @@ def process_entry(rec, mol):
     grad = rec.trajectory[-1].properties["current gradient"]
     return dict(
         smiles=smiles,
-        coords=coords.magnitude,  # already in ang
+        coords=coords.flatten().magnitude,  # already in ang
         energy=[energy * HARTEE_TO_KCAL],
         forces=[g * HARTEE_TO_KCAL / BOHR_TO_ANGSTROM for g in grad],
     )
