@@ -1,7 +1,12 @@
+import itertools
 import logging
+from typing import Any, Iterable
 
-import descent
+import datasets
+import datasets.table
 import openmm.unit
+import pyarrow
+from descent.targets.energy import DATA_SCHEMA
 from openff.qcsubmit.results import OptimizationResultCollection
 from tqdm import tqdm
 
@@ -26,25 +31,52 @@ logger.info("loading result collection")
 
 ds = OptimizationResultCollection.parse_file("combined-opt.json")
 
-entries = list()
-logger.info("calling to_records")
-for rec, mol in tqdm(ds.to_records(), desc="Processing records"):
+
+def process_entry(rec, mol):
+    """Turn a single rec, mol pair from
+    `OptimizationResultCollection.to_records` into the dict expected by
+    descent"""
     smiles = mol.to_smiles(mapped=True, isomeric=True)
     assert len(mol.conformers) == 1
     coords = mol.conformers[0]
     energy = rec.energies[-1]
     grad = rec.trajectory[-1].properties["current gradient"]
-    entries.append(
-        dict(
-            smiles=smiles,
-            coords=coords.magnitude,  # already in ang
-            energy=[energy * HARTEE_TO_KCAL],
-            forces=[g * HARTEE_TO_KCAL / BOHR_TO_ANGSTROM for g in grad],
-        )
+    return dict(
+        smiles=smiles,
+        coords=coords.magnitude,  # already in ang
+        energy=[energy * HARTEE_TO_KCAL],
+        forces=[g * HARTEE_TO_KCAL / BOHR_TO_ANGSTROM for g in grad],
     )
 
-logger.info("converting to dataset")
-dataset = descent.targets.energy.create_dataset(entries)
+
+def batched(iterable, n):
+    "rough equivalent to itertools.batched in 3.12, from the docs"
+    if n < 1:
+        raise ValueError("n must be at least one")
+    iterator = iter(iterable)
+    while batch := list(itertools.islice(iterator, n)):
+        yield batch
+
+
+def create_batched_dataset(
+    entries: Iterable[dict[str, Any]], chunksize=128
+) -> Iterable[pyarrow.RecordBatch]:
+    """Batched version of descent.targets.energy.create_dataset"""
+    for batch in batched(entries, chunksize):
+        yield pyarrow.RecordBatch.from_pylist(batch, schema=DATA_SCHEMA)
+
+
+table = pyarrow.Table.from_batches(
+    create_batched_dataset(
+        (
+            process_entry(rec, mol)
+            for rec, mol in tqdm(ds.to_records(), desc="Processing records")
+        )
+    ),
+    schema=DATA_SCHEMA,
+)
+dataset = datasets.Dataset(datasets.table.InMemoryTable(table))
+dataset.set_format("torch")
 
 logger.info("writing to disk")
 dataset.save_to_disk("test.out")
