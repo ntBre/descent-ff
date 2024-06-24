@@ -1,6 +1,13 @@
+import logging
+
 import descent
 import openmm.unit
 from openff.qcsubmit.results import OptimizationResultCollection
+from tqdm import tqdm
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(format="%(asctime)s %(message)s")
+logger.setLevel(logging.INFO)
 
 # based on convert-espaloma-data, it looks like we need to return a dict of
 # smiles, coords, energy, and forces
@@ -15,12 +22,13 @@ BOHR_TO_ANGSTROM = (1.0 * openmm.unit.bohr).value_in_unit(openmm.unit.angstrom)
 # according to descent.targets.energy.Entry, we want coords in Å, energy in
 # kcal/mol, and forces in kcal/mol/Å
 
+logger.info("loading result collection")
 
 ds = OptimizationResultCollection.parse_file("combined-opt.json")
 
 entries = list()
-records = ds.to_records()
-for rec, mol in records:
+logger.info("calling to_records")
+for rec, mol in tqdm(ds.to_records(), desc="Processing records"):
     smiles = mol.to_smiles(mapped=True, isomeric=True)
     assert len(mol.conformers) == 1
     coords = mol.conformers[0]
@@ -35,5 +43,8 @@ for rec, mol in records:
         )
     )
 
+logger.info("converting to dataset")
 dataset = descent.targets.energy.create_dataset(entries)
+
+logger.info("writing to disk")
 dataset.save_to_disk("test.out")
