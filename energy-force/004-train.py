@@ -173,12 +173,16 @@ def main(rank: int):
     init = "outputs/openff-2.1.0.pt"
     force_field, topologies = torch.load(init)
 
-    # take initial topologies from the original but try to overwrite forcefield
-    # from checkpoint
-    chk = "outputs/runs/20240202-231405/force-field-epoch-900.pt" 
-    force_field = torch.load(chk)
+    n_epochs = 1000
 
-    n_epochs = 100 # finish off last 100
+    checkpoint = False
+    if checkpoint:
+        # take initial topologies from the original but try to overwrite
+        # forcefield from checkpoint
+        chk = "outputs/runs/20240202-231405/force-field-epoch-900.pt" 
+        force_field = torch.load(chk)
+
+        n_epochs = 100 # finish off last 100
     lr = 0.01
 
     trainable = TrainableParameters(
