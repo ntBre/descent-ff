@@ -67,14 +67,11 @@ logger.info("loading result collection")
 
 ds = OptimizationResultCollection.parse_file("combined-opt.json")
 
-# this part does not use all the ram
-entries = [
+# this part does use all the ram
+entries = (
     process_entry(rec, mol)
     for rec, mol in tqdm(ds.to_records(), desc="Processing records")
-]
-
-with open("entries.json", "w") as f:
-    json.dump(entries, f)
+)
 
 table = pyarrow.Table.from_batches(
     create_batched_dataset(entries),
