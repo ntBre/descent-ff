@@ -29,7 +29,7 @@ BOHR_TO_ANGSTROM = (1.0 * openmm.unit.bohr).value_in_unit(openmm.unit.angstrom)
 # kcal/mol, and forces in kcal/mol/Å
 
 
-def process_entry(rec, mol):
+def process_entry(rec, mol) -> dict[str, Any] | None:
     """Turn a single rec, mol pair from
     `OptimizationResultCollection.to_records` into the dict expected by
     descent"""
@@ -37,7 +37,9 @@ def process_entry(rec, mol):
     assert len(mol.conformers) == 1
     coords = mol.conformers[0]
     energy = rec.energies[-1]
-    grad = rec.trajectory[-1].properties["current gradient"]
+    grad = rec.trajectory[-1].properties.get("current gradient", None)
+    if grad is None:
+        return None
     return dict(
         smiles=smiles,
         coords=coords.flatten().magnitude,  # already in ang
@@ -74,7 +76,7 @@ entries = (
 )
 
 table = pyarrow.Table.from_batches(
-    create_batched_dataset(entries),
+    create_batched_dataset(filter(lambda entry: entry is not None, entries)),
     schema=DATA_SCHEMA,
 )
 dataset = datasets.Dataset(datasets.table.InMemoryTable(table))
