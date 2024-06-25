@@ -1,4 +1,5 @@
 import itertools
+import json
 import logging
 from typing import Any, Iterable
 
@@ -26,10 +27,6 @@ BOHR_TO_ANGSTROM = (1.0 * openmm.unit.bohr).value_in_unit(openmm.unit.angstrom)
 
 # according to descent.targets.energy.Entry, we want coords in Å, energy in
 # kcal/mol, and forces in kcal/mol/Å
-
-logger.info("loading result collection")
-
-ds = OptimizationResultCollection.parse_file("combined-opt.json")
 
 
 def process_entry(rec, mol):
@@ -66,13 +63,21 @@ def create_batched_dataset(
         yield pyarrow.RecordBatch.from_pylist(batch, schema=DATA_SCHEMA)
 
 
+logger.info("loading result collection")
+
+ds = OptimizationResultCollection.parse_file("combined-opt.json")
+
+# this part does not use all the ram
+entries = [
+    process_entry(rec, mol)
+    for rec, mol in tqdm(ds.to_records(), desc="Processing records")
+]
+
+with open("entries.json", "w") as f:
+    json.dump(entries, f)
+
 table = pyarrow.Table.from_batches(
-    create_batched_dataset(
-        (
-            process_entry(rec, mol)
-            for rec, mol in tqdm(ds.to_records(), desc="Processing records")
-        )
-    ),
+    create_batched_dataset(entries),
     schema=DATA_SCHEMA,
 )
 dataset = datasets.Dataset(datasets.table.InMemoryTable(table))
