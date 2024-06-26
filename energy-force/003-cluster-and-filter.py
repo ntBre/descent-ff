@@ -5,7 +5,6 @@ field.
 
 from dataclasses import dataclass
 
-import click
 import datasets
 import descent.targets.energy
 import torch
@@ -16,8 +15,7 @@ class Config:
     dataset: str  # path to dataset directory
 
 
-@click.command()
-def main(nworkers):
+def main():
     conf = Config(dataset="test.out")
 
     dataset = datasets.Dataset.load_from_disk(conf.dataset)
