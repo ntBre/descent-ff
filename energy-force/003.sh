@@ -19,5 +19,5 @@ source ~/.bashrc
 mamba activate descent-ff
 
 python 003-cluster-and-filter.py -c -n $SLURM_CPUS_PER_TASK
-       
+
 date
