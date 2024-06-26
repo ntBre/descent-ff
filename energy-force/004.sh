@@ -15,7 +15,7 @@ date
 hostname
 
 source ~/.bashrc
-mamba activate descent-ff
+mamba activate fb-196-qcnew
 
 python 004-train.py $SLURM_CPUS_PER_TASK
 
