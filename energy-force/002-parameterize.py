@@ -61,15 +61,9 @@ def apply_parameters(
 def main():
     force_field_paths = ["openff-2.1.0.offxml"]
 
-    smiles_per_source = json.loads(
-        (pathlib.Path("outputs/data-raw/smiles.json")).read_text()
-    )
+    smiles: list[str] = json.loads((pathlib.Path("smiles.json")).read_text())
 
-    unique_smiles = set()
-
-    for source, smiles in smiles_per_source.items():
-        print(f"{source}: {len(smiles)}")
-        unique_smiles.update(smiles)
+    unique_smiles: set[str] = set(smiles)
 
     print(f"N smiles={len(unique_smiles)}", flush=True)
 
