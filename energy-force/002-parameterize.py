@@ -37,10 +37,13 @@ def apply_parameters(
 
     with multiprocessing.get_context("spawn").Pool() as pool:
         interchanges = list(
-            tqdm.tqdm(
-                pool.imap(build_interchange_fn, unique_smiles),
-                total=len(unique_smiles),
-                desc="building interchanges",
+            pool.imap(
+                build_interchange_fn,
+                tqdm.tqdm(
+                    unique_smiles,
+                    total=len(unique_smiles),
+                    desc="building interchanges",
+                ),
             )
         )
 
