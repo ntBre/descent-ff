@@ -18,5 +18,5 @@ source ~/.bashrc
 mamba activate descent-ff
 
 python 004-train.py $SLURM_CPUS_PER_TASK
-       
+
 date
