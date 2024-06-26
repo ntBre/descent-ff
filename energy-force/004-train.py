@@ -176,14 +176,6 @@ def main(rank: int):
         "gloo", rank=rank, world_size=WORLD_SIZE
     )
 
-    sources = [
-        "gen2-opt",
-        "gen2-torsion",
-        "spice-des-monomers",
-        "spice-pubchem",
-    ]
-    # sources = ["gen2-torsion"]
-
     print("loading force field")
 
     init = "outputs/openff-2.1.0.pt"
@@ -220,12 +212,7 @@ def main(rank: int):
 
     print("concatenating data sets")
 
-    dataset = datasets.concatenate_datasets(
-        [
-            datasets.Dataset.load_from_disk(f"outputs/data-clustered/{source}")
-            for source in sources
-        ]
-    )
+    dataset = datasets.Dataset.load_from_disk("filtered.out")
     n_entries = len(dataset)
 
     print("extracting smiles")
