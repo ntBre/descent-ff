@@ -7,7 +7,12 @@ import datasets.table
 import openmm.unit
 import pyarrow
 from descent.targets.energy import DATA_SCHEMA
-from openff.qcsubmit.results import OptimizationResultCollection
+from openff.qcsubmit.results import (
+    OptimizationResultCollection,
+    TorsionDriveResultCollection,
+)
+from openff.toolkit import Molecule
+from qcportal.optimization.record_models import OptimizationRecord
 from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
@@ -64,14 +69,45 @@ def create_batched_dataset(
         yield pyarrow.RecordBatch.from_pylist(batch, schema=DATA_SCHEMA)
 
 
+def convert_torsion_data(
+    td: TorsionDriveResultCollection,
+) -> Iterable[tuple[OptimizationRecord, Molecule]]:
+    """Convert a ``TorsionDriveResultCollection`` into a sequence of
+    (``OptimizationRecord``, ``Molecule``) Pairs just like
+    ``OptimizationResultCollection.to_records``.
+
+    """
+    for rec, mol in td.to_records():
+        opts: dict[tuple[int], OptimizationRecord] = rec.minimum_optimizations
+
+        grid_to_conf = {
+            grid: conf
+            for grid, conf in zip(mol.properties["grid_ids"], mol._conformers)
+        }
+
+        # TorsionDriveResultCollection.to_records already packs all of the
+        # qcportal geometries into mol.conformers. all I need to do is copy the
+        # molecule and give it a single conformer
+
+        for k, opt in opts.items():
+            mol = Molecule(mol)  # this should use the copy initializer
+            mol._conformers = []
+            mol.add_conformer(grid_to_conf[k])
+            yield opt, mol
+
+
 logger.info("loading result collection")
 
-ds = OptimizationResultCollection.parse_file("combined-opt.json")
+opt = OptimizationResultCollection.parse_file("combined-opt.json")
+td = TorsionDriveResultCollection.parse_file("combined-td.json")
+records_and_molecules = itertools.chain(
+    opt.to_records(), convert_torsion_data(td)
+)
 
 # this part does use all the ram
 entries = (
     process_entry(rec, mol)
-    for rec, mol in tqdm(ds.to_records(), desc="Processing records")
+    for rec, mol in tqdm(opt.to_records(), desc="Processing records")
 )
 
 table = pyarrow.Table.from_batches(
