@@ -21,7 +21,6 @@ td.entries[k] = v[:1]
 print(td.n_results)
 
 for rec, mol in td.to_records():
-    energies: dict[tuple[int], float] = rec.final_energies
     opts: dict[tuple[int], OptimizationRecord] = rec.minimum_optimizations
 
     grid_to_conf = {
@@ -34,11 +33,11 @@ for rec, mol in td.to_records():
     # give it a single conformer
 
     records_and_molecules = []
-    for k, e in energies.items():
+    for k, opt in opts.items():
         mol = Molecule(mol)  # this should use the copy initializer
         mol._conformers = []
         mol.add_conformer(grid_to_conf[k])
-        records_and_molecules.append((opts[k], mol))
+        records_and_molecules.append((opt, mol))
         assert mol.n_conformers == 1
 
 # the end goal is a sequence of (rec, mol) pairs that can be used like (and
