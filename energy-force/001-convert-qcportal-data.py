@@ -100,6 +100,7 @@ logger.info("loading result collection")
 
 opt = OptimizationResultCollection.parse_file("combined-opt.json")
 td = TorsionDriveResultCollection.parse_file("combined-td.json")
+tot = opt.n_results + td.n_results
 records_and_molecules = itertools.chain(
     opt.to_records(), convert_torsion_data(td)
 )
@@ -107,7 +108,7 @@ records_and_molecules = itertools.chain(
 # this part does use all the ram
 entries = (
     process_entry(rec, mol)
-    for rec, mol in tqdm(opt.to_records(), desc="Processing records")
+    for rec, mol in tqdm(records_and_molecules, desc="Processing records", total=tot)
 )
 
 table = pyarrow.Table.from_batches(
