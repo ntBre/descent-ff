@@ -9,12 +9,13 @@
 #SBATCH --export ALL
 #SBATCH --mail-user=bwestbr1@uci.edu
 #SBATCH --constraint=fastscratch
+#SBATCH -o logs/2.out
 
 date
 hostname
 
 source ~/.bashrc
-mamba activate descent-ff
+mamba activate fb-196-qcnew
 
 python 002-parameterize.py
        

@@ -10,6 +10,7 @@
 #SBATCH --export ALL
 #SBATCH --mail-user=bwestbr1@uci.edu
 #SBATCH --constraint=fastscratch
+#SBATCH -o logs/4.out
 
 date
 hostname
