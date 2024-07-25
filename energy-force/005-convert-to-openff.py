@@ -13,7 +13,8 @@ from openff.toolkit.typing.engines.smirnoff import ParameterHandler
     "force_field_path",
     type=click.Path(exists=True, dir_okay=False, path_type=pathlib.Path),
 )
-def main(force_field_path: pathlib.Path):
+@click.option("--output-path", "-o")
+def main(force_field_path: pathlib.Path, output_path):
     force_field_openff = openff.toolkit.ForceField("openff-2.1.0.offxml")
     force_field_smee: smee.TensorForceField = torch.load(force_field_path)
 
@@ -75,7 +76,7 @@ def main(force_field_path: pathlib.Path):
 
             print(handler_parameter.id, changes)
 
-    force_field_openff.to_file("openff-2.1.0-smee.offxml")
+    force_field_openff.to_file(output_path)
 
 
 if __name__ == "__main__":
