@@ -108,7 +108,9 @@ records_and_molecules = itertools.chain(
 # this part does use all the ram
 entries = (
     process_entry(rec, mol)
-    for rec, mol in tqdm(records_and_molecules, desc="Processing records", total=tot)
+    for rec, mol in tqdm(
+        records_and_molecules, desc="Processing records", total=tot
+    )
 )
 
 table = pyarrow.Table.from_batches(
