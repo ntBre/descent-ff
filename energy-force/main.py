@@ -180,10 +180,10 @@ def step1(datasets_: list[Dataset], output_path: str, smiles_path: str):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("config_file")
-    parser.parse_args()
+    args = parser.parse_args()
 
-    logger.info(f"loading config from {parser.config_file}")
-    config = Config.from_file(parser.config_file)
+    logger.info(f"loading config from {args.config_file}")
+    config = Config.from_file(args.config_file)
 
     logger.info("starting step 1")
     step1(config.datasets, config.table_path, config.smiles_path)
