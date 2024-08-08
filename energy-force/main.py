@@ -177,13 +177,17 @@ def step1(datasets_: list[Dataset], output_path: str, smiles_path: str):
 
 
 def main():
+    logger.info("loading config")
     config = Config.from_file("test.yaml")
-    print(config)
-    exit(0)
+    logger.info("starting step 1")
     step1(config.datasets, config.table_path, config.smiles_path)
+    logger.info("starting step 2")
     step2(config.force_fields, config.smiles_path, config.torch_path)
+    logger.info("starting step 3")
     step3(config.table_path, config.torch_path, config.filtered_path)
+    logger.info("starting step 4")
     step4(config.world_size, config.torch_path, config.filtered_path)
+    logger.info("finished")
 
 
 if __name__ == "__main__":
