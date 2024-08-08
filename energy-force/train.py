@@ -160,7 +160,7 @@ def write_metrics(
     writer.flush()
 
 
-def main(rank: int, world_size):
+def _main(rank: int, world_size, torch_path, filtered_path):
     print(f"running with world_size = {world_size}")
 
     torch.set_num_threads(1)
@@ -168,10 +168,9 @@ def main(rank: int, world_size):
         "gloo", rank=rank, world_size=world_size
     )
 
-    print("loading force field")
+    print(f"loading force field from {torch_path}")
 
-    init = "outputs/openff-2.1.0.pt"
-    force_field, topologies = torch.load(init)
+    force_field, topologies = torch.load(torch_path)
 
     n_epochs = 1000
 
@@ -204,7 +203,7 @@ def main(rank: int, world_size):
 
     print("concatenating data sets")
 
-    dataset = datasets.Dataset.load_from_disk("filtered.out")
+    dataset = datasets.Dataset.load_from_disk(filtered_path)
     n_entries = len(dataset)
 
     print("extracting smiles")
@@ -288,11 +287,18 @@ def main(rank: int, world_size):
     torch.save(force_field, experiment_dir / "force-field.pt")
 
 
-if __name__ == "__main__":
+def main(world_size, torch_path, filtered_path):
     os.environ["MASTER_ADDR"] = "localhost"
     os.environ["MASTER_PORT"] = "29501"
 
-    world_size = 1
     torch.multiprocessing.spawn(
-        main, (world_size,), nprocs=world_size, join=True
+        _main,
+        (world_size, torch_path, filtered_path),
+        nprocs=world_size,
+        join=True,
     )
+
+
+if __name__ == "__main__":
+    world_size = 1
+    main(world_size, "outputs/openff-2.1.0.pt")

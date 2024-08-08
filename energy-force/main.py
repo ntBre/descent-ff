@@ -21,6 +21,7 @@ from yaml import Loader, load
 
 from _filter import main as step3
 from parameterize import main as step2
+from train import main as step4
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(format="%(asctime)s %(message)s")
@@ -47,11 +48,13 @@ class Config:
     force_fields: list[str]
     torch_path: str
     filtered_path: str
+    world_size: int
 
     @classmethod
     def from_file(cls, filename):
         with open(filename) as f:
             d = load(f, Loader=Loader)
+            d["world_size"] = int(d["world_size"])
             return cls(**d)
 
 
@@ -177,7 +180,7 @@ def main():
     step1(config.datasets, config.table_path, config.smiles_path)
     step2(config.force_fields, config.smiles_path, config.torch_path)
     step3(config.table_path, config.torch_path, config.filtered_path)
-    # TODO step 4
+    step4(config.world_size, config.torch_path, config.filtered_path)
 
 
 if __name__ == "__main__":

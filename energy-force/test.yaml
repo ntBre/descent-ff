@@ -22,3 +22,6 @@ torch_path: outputs/openff-2.1.0.pt
 # output of step 3, contains only the records from step 1 that were successfully
 # parameterized by step 2
 filtered_path: filtered.out
+
+# inputs for step 4, mostly pytorch parameters
+world_size: 1
