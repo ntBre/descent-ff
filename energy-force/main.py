@@ -54,8 +54,11 @@ class Config:
     def from_file(cls, filename):
         with open(filename) as f:
             d = load(f, Loader=Loader)
-            d["world_size"] = int(d["world_size"])
-            return cls(**d)
+            tmp = cls(**d)
+            # tidy up the types before returning
+            tmp.datasets = [Dataset(**d) for d in tmp.datasets]
+            tmp.world_size = int(tmp.world_size)
+            return tmp
 
 
 def convert_torsion_data(
