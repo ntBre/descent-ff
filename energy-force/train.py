@@ -284,7 +284,10 @@ def _main(rank: int, world_size, torch_path, filtered_path):
         )
         print("")
 
-    torch.save(force_field, experiment_dir / "force-field.pt")
+    output_ff = experiment_dir / "force-field.pt"
+    torch.save(force_field, output_ff)
+
+    return output_ff
 
 
 def main(world_size, torch_path, filtered_path):

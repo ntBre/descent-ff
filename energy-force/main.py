@@ -21,6 +21,7 @@ from tqdm import tqdm
 from yaml import Loader, load
 
 from _filter import main as step3
+from convert import main as step5
 from parameterize import main as step2
 from train import main as step4
 
@@ -50,6 +51,7 @@ class Config:
     torch_path: str
     filtered_path: str
     world_size: int
+    output_path: str
 
     @classmethod
     def from_file(cls, filename):
@@ -195,7 +197,10 @@ def main():
     step3(config.table_path, config.torch_path, config.filtered_path)
 
     logger.info("starting step 4")
-    step4(config.world_size, config.torch_path, config.filtered_path)
+    out_ff = step4(config.world_size, config.torch_path, config.filtered_path)
+
+    logger.info("starting step 5")
+    step5(config.force_fields, out_ff, config.output_path)
 
     logger.info("finished")
 

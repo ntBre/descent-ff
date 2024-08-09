@@ -25,3 +25,6 @@ filtered_path: filtered.out
 
 # inputs for step 4, mostly pytorch parameters
 world_size: 1
+
+# final output path for step 5
+output_path: smee.offxml
