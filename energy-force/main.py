@@ -10,7 +10,6 @@ import datasets
 import datasets.table
 import openmm.unit
 import pyarrow
-from descent.targets.energy import DATA_SCHEMA
 from openff.qcsubmit.results import (
     OptimizationResultCollection,
     TorsionDriveResultCollection,
@@ -34,6 +33,16 @@ HARTEE_TO_KCAL = (
 ).value_in_unit(openmm.unit.kilocalorie_per_mole)
 
 BOHR_TO_ANGSTROM = (1.0 * openmm.unit.bohr).value_in_unit(openmm.unit.angstrom)
+
+# copied from descent.targets.energy
+DATA_SCHEMA = pyarrow.schema(
+    [
+        ("smiles", pyarrow.string()),
+        ("coords", pyarrow.list_(pyarrow.float64())),
+        ("energy", pyarrow.list_(pyarrow.float64())),
+        ("forces", pyarrow.list_(pyarrow.float64())),
+    ]
+)
 
 
 @dataclass
