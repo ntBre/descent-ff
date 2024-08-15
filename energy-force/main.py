@@ -169,11 +169,14 @@ def step1(datasets_: list[Dataset], output_path: str, smiles_path: str):
     )
     entries = (e for e in entries if e is not None)
 
-    table = pyarrow.Table.from_batches(
-        create_batched_dataset(entries),
-        schema=DATA_SCHEMA,
+    # try creating an empty dataset and adding to it instead of going through
+    # an intermediate Table
+    dataset = datasets.Dataset.from_dict(
+        dict(smiles=[], coords=[], energy=[], forces=[])
     )
-    dataset = datasets.Dataset(datasets.table.InMemoryTable(table))
+    for entry in entries:
+        dataset.add_item(entry)
+
     dataset.set_format("torch")
 
     logger.info("writing to disk")
