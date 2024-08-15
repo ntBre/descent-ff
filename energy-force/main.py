@@ -158,11 +158,10 @@ def step1(datasets_: list[Dataset], output_path: str, smiles_path: str):
             total=total_results,
         )
     )
+    entries = (e for e in entries if e is not None)
 
     table = pyarrow.Table.from_batches(
-        create_batched_dataset(
-            filter(lambda entry: entry is not None, entries)
-        ),
+        create_batched_dataset(entries),
         schema=DATA_SCHEMA,
     )
     dataset = datasets.Dataset(datasets.table.InMemoryTable(table))
