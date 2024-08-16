@@ -169,13 +169,7 @@ def step1(datasets_: list[Dataset], output_path: str, smiles_path: str):
     )
     entries = (e for e in entries if e is not None)
 
-    # try creating an empty dataset and adding to it instead of going through
-    # an intermediate Table
-    dataset = datasets.Dataset.from_dict(
-        dict(smiles=[], coords=[], energy=[], forces=[])
-    )
-    for entry in entries:
-        dataset.add_item(entry)
+    dataset = datasets.Dataset.from_generator(entries)
 
     dataset.set_format("torch")
 
