@@ -2,6 +2,7 @@ import argparse
 import itertools
 import json
 import logging
+import resource
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Iterable
@@ -100,6 +101,9 @@ def convert_torsion_data(
             yield opt, mol
 
 
+COUNT = 0
+
+
 def process_entry(rec, mol) -> dict[str, Any] | None:
     """Turn a single rec, mol pair from
     `OptimizationResultCollection.to_records` into the dict expected by
@@ -111,6 +115,11 @@ def process_entry(rec, mol) -> dict[str, Any] | None:
     grad = rec.trajectory[-1].properties.get("current gradient", None)
     if grad is None:
         return None
+    global COUNT
+    COUNT += 1
+    if COUNT % 100 == 0:
+        mem = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+        tqdm.write(f"Current mem: {mem}")
     return dict(
         smiles=smiles,
         coords=coords.flatten().magnitude,  # already in ang
