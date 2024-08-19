@@ -18,6 +18,7 @@ from openff.qcsubmit.results import (
     OptimizationResultCollection,
     TorsionDriveResultCollection,
 )
+from openff.qcsubmit.utils import _CachedPortalClient, portal_client_manager
 from openff.toolkit import Molecule
 from qcportal.optimization import OptimizationRecord
 from tqdm import tqdm
@@ -166,19 +167,23 @@ def step1(datasets_: list[Dataset], output_path: str, smiles_path: str):
     ``output_path``, while the unique SMILES in the ``datasets.Dataset`` are
     serialized to JSON and written to ``smiles_path``.
     """
+    client = _CachedPortalClient(
+        "https://api.qcarchive.molssi.org:443", ".cache"
+    )
     total_results = 0
     iters = list()
-    for d in datasets_:
-        match d.kind:
-            case "opt":
-                ds = OptimizationResultCollection.parse_file(d.path)
-                iters.append(ds.to_records())
-            case "td":
-                ds = TorsionDriveResultCollection.parse_file(d.path)
-                iters.append(convert_torsion_data(ds))
-            case k:
-                raise ValueError(f"unrecognized dataset kind: {k}")
-        total_results += ds.n_results
+    with portal_client_manager(lambda _: client):
+        for d in datasets_:
+            match d.kind:
+                case "opt":
+                    ds = OptimizationResultCollection.parse_file(d.path)
+                    iters.append(ds.to_records())
+                case "td":
+                    ds = TorsionDriveResultCollection.parse_file(d.path)
+                    iters.append(convert_torsion_data(ds))
+                case k:
+                    raise ValueError(f"unrecognized dataset kind: {k}")
+            total_results += ds.n_results
     records_and_molecules = itertools.chain(*iters)
 
     # this part does use all the ram
