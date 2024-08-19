@@ -1,10 +1,13 @@
 import argparse
+import functools
 import itertools
 import json
 import logging
+import os
 import resource
 from dataclasses import dataclass
 from pathlib import Path
+from tempfile import TemporaryDirectory
 from typing import Any, Iterable
 
 import datasets
@@ -145,6 +148,17 @@ def create_batched_dataset(
         yield pyarrow.RecordBatch.from_pylist(batch, schema=DATA_SCHEMA)
 
 
+def load_batches(d, n):
+    "Load ``n`` sequential batch files from directory ``d``."
+    for i in range(n):
+        logger.info(f"loading batch {i}")
+        path = os.path.join(d, f"batch{i}.json")
+        with open(path) as inp:
+            entries = json.load(inp)
+            for entry in entries:
+                yield entry
+
+
 def step1(datasets_: list[Dataset], output_path: str, smiles_path: str):
     """Load data from qcsubmit result collections and store the result to disk.
 
@@ -178,7 +192,15 @@ def step1(datasets_: list[Dataset], output_path: str, smiles_path: str):
     )
     entries = (e for e in entries if e is not None)
 
-    dataset = datasets.Dataset.from_generator(entries)
+    with TemporaryDirectory() as d:
+        for i, batch in enumerate(batched(entries, 1024)):
+            path = os.path.join(d, f"batch{i}.json")
+            logger.info(f"writing batch {i}")
+            with open(path, "w") as out:
+                json.dump(batch, out)
+
+        f = functools.partial(load_batches, d, i)
+        dataset = datasets.Dataset.from_generator(f)
 
     dataset.set_format("torch")
 
