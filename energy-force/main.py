@@ -125,7 +125,7 @@ def process_entry(rec, mol) -> dict[str, Any] | None:
         tqdm.write(f"Current mem: {mem}")
     return dict(
         smiles=smiles,
-        coords=coords.flatten().magnitude,  # already in ang
+        coords=coords.flatten().tolist().magnitude,  # already in ang
         energy=[energy * HARTEE_TO_KCAL],
         forces=[g * HARTEE_TO_KCAL / BOHR_TO_ANGSTROM for g in grad],
     )
