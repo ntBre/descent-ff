@@ -198,11 +198,11 @@ def step1(datasets_: list[Dataset], output_path: str, smiles_path: str):
                 json.dump(batch, out)
 
             mem = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
-            print(f"Current mem before GC: {mem}")
+            logger.info(f"Current mem before GC: {mem}")
             del batch
             gc.collect()
             mem = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
-            print(f"Current mem after GC: {mem}")
+            logger.info(f"Current mem after GC: {mem}")
 
         f = functools.partial(load_batches, d, i)
         dataset = datasets.Dataset.from_generator(f)
