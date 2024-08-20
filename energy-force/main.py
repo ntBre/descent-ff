@@ -114,7 +114,7 @@ def process_entry(rec, mol) -> dict[str, Any] | None:
     assert len(mol.conformers) == 1
     coords = mol.conformers[0]
     energy = rec.energies[-1]
-    grad = rec.trajectory[-1].properties.get("current gradient", None)
+    grad = rec.trajectory_element(-1).properties.get("current gradient", None)
     if grad is None:
         return None
     return dict(
