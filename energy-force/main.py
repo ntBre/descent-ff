@@ -123,7 +123,7 @@ def process_entry(rec, mol) -> dict[str, Any] | None:
     COUNT += 1
     if COUNT % 100 == 0:
         mem = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
-        tqdm.write(f"Current mem: {mem}")
+        print(f"Current mem: {mem}")
     return dict(
         smiles=smiles,
         coords=coords.flatten().magnitude.tolist(),  # already in ang
