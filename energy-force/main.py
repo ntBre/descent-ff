@@ -1,6 +1,5 @@
 import argparse
 import functools
-import gc
 import itertools
 import json
 import logging
@@ -199,10 +198,6 @@ def step1(datasets_: list[Dataset], output_path: str, smiles_path: str):
 
             mem = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
             logger.info(f"Current mem before GC: {mem}")
-            del batch
-            gc.collect()
-            mem = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
-            logger.info(f"Current mem after GC: {mem}")
 
         f = functools.partial(load_batches, d, i)
         dataset = datasets.Dataset.from_generator(f)
