@@ -76,6 +76,11 @@ def main(force_field_paths: list[str], smiles_path: str, torch_path: str):
     force_field, topologies = apply_parameters(
         unique_smiles, *force_field_paths
     )
+
+    # assume the path is a filename, and create the parent dir
+    path = pathlib.Path(torch_path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+
     torch.save((force_field, topologies), torch_path)
 
 
