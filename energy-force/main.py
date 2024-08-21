@@ -215,6 +215,33 @@ def step1(datasets_: list[Dataset], output_path: str, smiles_path: str):
         json.dump(unique_smiles, out)
 
 
+def up_to_date(targets: list[str], deps: list[str]) -> bool:
+    """Returns whether or not all targets are more recent than their
+    dependencies."""
+    # both targets and deps have a range of mtimes. This example shows a
+    # not-up-to-date situation, where some dependencies are newer than all the
+    # targets
+    #
+    # targets: |--------------|
+    # deps:           |----------|
+    #
+    # In contrast, here all of the dependencies are older than the targets and
+    # would be up to date
+    #
+    # targets:               |--------------|
+    # deps:    |----------|
+    #
+    # if any dep time is more recent than the targets, it's not up to date. we
+    # can treat the oldest target as the timestamp for targets to be
+    # conservative. phrased more appropriately for this function, if all dep
+    # times are older than the oldest target, the targets are up to date.
+    target_mtimes = [os.path.getmtime(p) for p in targets]
+    oldest_target = sorted(target_mtimes)[0]
+    dep_mtimes = [os.path.getmtime(p) for p in deps]
+
+    return all((d < oldest_target for d in dep_mtimes))
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("config_file")
