@@ -77,6 +77,9 @@ class Config:
             tmp.world_size = int(tmp.world_size)
             return tmp
 
+    def dataset_paths(self):
+        return [d.path for d in self.datasets]
+
 
 def convert_torsion_data(
     td: TorsionDriveResultCollection,
@@ -250,8 +253,11 @@ def main():
     logger.info(f"loading config from {args.config_file}")
     config = Config.from_file(args.config_file)
 
-    logger.info("starting step 1")
-    step1(config.datasets, config.table_path, config.smiles_path)
+    if not up_to_date(
+        [config.table_path, config.smiles_path], config.dataset_paths()
+    ):
+        logger.info("starting step 1")
+        step1(config.datasets, config.table_path, config.smiles_path)
 
     logger.info("starting step 2")
     step2(config.force_fields, config.smiles_path, config.torch_path)
