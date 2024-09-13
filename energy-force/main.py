@@ -66,6 +66,8 @@ class Config:
     filtered_path: str
     world_size: int
     output_path: str
+    bond_k_denom: float
+    angle_k_denom: float
 
     @classmethod
     def from_file(cls, filename):
@@ -75,6 +77,8 @@ class Config:
             # tidy up the types before returning
             tmp.datasets = [Dataset(**d) for d in tmp.datasets]
             tmp.world_size = int(tmp.world_size)
+            tmp.bond_k_denom = float(tmp.bond_k_denom)
+            tmp.angle_k_denom = float(tmp.angle_k_denom)
             return tmp
 
     def dataset_paths(self):
@@ -266,7 +270,13 @@ def main():
     step3(config.table_path, config.torch_path, config.filtered_path)
 
     logger.info("starting step 4")
-    out_ff = step4(config.world_size, config.torch_path, config.filtered_path)
+    out_ff = step4(
+        config.world_size,
+        config.torch_path,
+        config.filtered_path,
+        config.bond_k_denom,
+        config.angle_k_denom,
+    )
 
     logger.info("starting step 5")
     step5(config.force_fields, out_ff, config.output_path)

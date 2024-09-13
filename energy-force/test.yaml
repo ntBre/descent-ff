@@ -28,3 +28,8 @@ world_size: 1
 
 # final output path for step 5
 output_path: smee.offxml
+
+# scaling factors for bond and angle parameters as denominators (ie they are
+# translated into 1/k, where k is the value provided here)
+bond_k_denom: 500.0
+angle_k_denom: 100.0

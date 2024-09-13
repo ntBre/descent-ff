@@ -160,7 +160,14 @@ def write_metrics(
     writer.flush()
 
 
-def _main(rank: int, world_size, torch_path, filtered_path):
+def _main(
+    rank: int,
+    world_size,
+    torch_path,
+    filtered_path,
+    bond_k_denom,
+    angle_k_denom,
+):
     print(f"running with world_size = {world_size}")
 
     torch.set_num_threads(1)
@@ -189,12 +196,12 @@ def _main(rank: int, world_size, torch_path, filtered_path):
         {
             "Bonds": ParameterConfig(
                 cols=["k", "length"],
-                scales={"k": 1.0 / 100.0, "length": 1.0},
+                scales={"k": 1.0 / bond_k_denom, "length": 1.0},
                 constraints={"k": (0.0, None), "length": (0.0, None)},
             ),
             "Angles": ParameterConfig(
                 cols=["k", "angle"],
-                scales={"k": 1.0 / 100.0, "angle": 1.0},
+                scales={"k": 1.0 / angle_k_denom, "angle": 1.0},
                 constraints={"k": (0.0, None), "angle": (0.0, math.pi)},
             ),
             "ProperTorsions": ParameterConfig(cols=["k"], scales={"k": 1.0}),
