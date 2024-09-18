@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import pathlib
 
 import click
@@ -9,11 +11,11 @@ from openff.toolkit.typing.engines.smirnoff import ParameterHandler
 
 
 @click.command()
-@click.argument("--base-ffs", default=["openff-2.1.0.offxml"])
 @click.argument(
     "force_field_path",
     type=click.Path(exists=True, dir_okay=False, path_type=pathlib.Path),
 )
+@click.option("--base-ffs", multiple=True, default=["openff-2.1.0.offxml"])
 @click.option("--output-path", "-o")
 def main(base_ffs, force_field_path: pathlib.Path, output_path):
     force_field_openff = openff.toolkit.ForceField(*base_ffs)
