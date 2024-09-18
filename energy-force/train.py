@@ -297,13 +297,13 @@ def _main(
     return output_ff
 
 
-def main(world_size, torch_path, filtered_path):
+def main(world_size, torch_path, filtered_path, bond_k_denom, angle_k_denom):
     os.environ["MASTER_ADDR"] = "localhost"
     os.environ["MASTER_PORT"] = "29501"
 
     torch.multiprocessing.spawn(
         _main,
-        (world_size, torch_path, filtered_path),
+        (world_size, torch_path, filtered_path, bond_k_denom, angle_k_denom),
         nprocs=world_size,
         join=True,
     )
