@@ -6,11 +6,11 @@ sbatch <<INP
 #!/bin/bash
 #SBATCH -J smee
 #SBATCH -p standard
-#SBATCH -t 288:00:00
+#SBATCH -t 336:00:00
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
-#SBATCH --mem=120gb
+#SBATCH --mem=164gb
 #SBATCH --account dmobley_lab
 #SBATCH --export ALL
 #SBATCH --mail-user=bwestbr1@uci.edu
@@ -23,6 +23,7 @@ hostname
 source ~/.bashrc
 mamba activate fb-196-qcnew
 
+#memray run main.py $config
 python main.py $config
 
 date
