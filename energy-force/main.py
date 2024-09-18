@@ -242,9 +242,12 @@ def up_to_date(targets: list[str], deps: list[str]) -> bool:
     # can treat the oldest target as the timestamp for targets to be
     # conservative. phrased more appropriately for this function, if all dep
     # times are older than the oldest target, the targets are up to date.
-    target_mtimes = [os.path.getmtime(p) for p in targets]
-    oldest_target = sorted(target_mtimes)[0]
-    dep_mtimes = [os.path.getmtime(p) for p in deps]
+    try:
+        target_mtimes = [os.path.getmtime(p) for p in targets]
+        oldest_target = sorted(target_mtimes)[0]
+        dep_mtimes = [os.path.getmtime(p) for p in deps]
+    except:
+        return False
 
     return all((d < oldest_target for d in dep_mtimes))
 
