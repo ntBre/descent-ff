@@ -18,6 +18,10 @@ from openff.toolkit.typing.engines.smirnoff import ParameterHandler
 @click.option("--base-ffs", multiple=True, default=["openff-2.1.0.offxml"])
 @click.option("--output-path", "-o")
 def main(base_ffs, force_field_path: pathlib.Path, output_path):
+    _main(base_ffs, force_field_path, output_path)
+
+
+def _main(base_ffs, force_field_path: pathlib.Path, output_path):
     force_field_openff = openff.toolkit.ForceField(*base_ffs)
     force_field_smee: smee.TensorForceField = torch.load(force_field_path)
 

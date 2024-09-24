@@ -25,7 +25,7 @@ from tqdm import tqdm
 from yaml import Loader, load
 
 from _filter import main as step3
-from convert import main as step5
+from convert import _main as step5
 from parameterize import main as step2
 from train import main as step4
 
