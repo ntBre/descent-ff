@@ -246,7 +246,7 @@ def up_to_date(targets: list[str], deps: list[str]) -> bool:
         target_mtimes = [os.path.getmtime(p) for p in targets]
         oldest_target = sorted(target_mtimes)[0]
         dep_mtimes = [os.path.getmtime(p) for p in deps]
-    except:
+    except FileNotFoundError:
         return False
 
     return all((d < oldest_target for d in dep_mtimes))
